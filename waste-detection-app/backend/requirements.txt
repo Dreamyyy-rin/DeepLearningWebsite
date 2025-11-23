@@ -1,0 +1,10 @@
+Flask
+torch
+torchvision
+numpy
+Pillow
+flask-cors
+pandas
+Ultralytics
+tqdm
+seaborn
