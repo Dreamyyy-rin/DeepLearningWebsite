@@ -133,7 +133,8 @@ tbody tr:nth-child(even) {
   }
   .results-summary h3 {
     border-left: none;
-    border-bottom: 4px solid #3b82f6;
+    text-align: center;
+    border-bottom: 4px solid #3e3f29;
     padding-left: 0;
     padding-bottom: 10px;
   }
