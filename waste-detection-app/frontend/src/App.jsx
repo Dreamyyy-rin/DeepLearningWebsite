@@ -1,21 +1,52 @@
-import React, { useState } from 'react';
-import Upload from './components/Upload';
-import Results from './components/Results';
+import React, { useState, useRef, useEffect } from "react"; // 1. Tambah useRef & useEffect
+import Upload from "./components/Upload";
+import Results from "./components/Results";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import "./App.css";
+import Footer from "./components/Footer";
 
 const App = () => {
-    const [results, setResults] = useState(null);
+  const [results, setResults] = useState(null);
 
-    const handleResults = (data) => {
-        setResults(data);
-    };
+  const resultsRef = useRef(null);
 
-    return (
-        <div>
-            <h1>Waste Detection App</h1>
-            <Upload onResults={handleResults} />
-            {results && <Results data={results} />}
+  const handleResults = (data) => {
+    setResults(data);
+  };
+
+  useEffect(() => {
+    if (results && resultsRef.current) {
+      setTimeout(() => {
+        resultsRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    }
+  }, [results]);
+
+  return (
+    <div className="container">
+      <Navbar />
+      <Hero />
+
+      <main className="main-content">
+        <div id="detector" className="hero-wrapper">
+          <Upload onResults={handleResults} />
+
+          <div ref={resultsRef}>
+            {results && (
+              <div className="results-section">
+                <Results data={results} />
+              </div>
+            )}
+          </div>
         </div>
-    );
+      </main>
+      <Footer />
+    </div>
+  );
 };
 
 export default App;

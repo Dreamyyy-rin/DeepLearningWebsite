@@ -1,0 +1,140 @@
+.results-container {
+  display: flex;
+  align-items: flex-start;
+
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+  gap: 60px;
+  box-sizing: border-box;
+  margin-top: 60px;
+  padding-top: 60px;
+  border-top: 1px solid #e5e7eb;
+  margin-bottom: 100px;
+}
+
+.results-summary {
+  width: 40%;
+  flex-shrink: 0;
+
+  position: relative;
+}
+
+.results-summary h3 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #3e3f29;
+  margin-top: 0;
+  margin-bottom: 20px;
+
+  border-left: 5px solid #7d8d86;
+  padding-left: 20px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.results-info p {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.highlight-text {
+  color: #3e3f29;
+}
+
+.results-details-card {
+  width: 55%;
+  flex-shrink: 0;
+
+  margin-left: 20px;
+
+  background: #fff;
+  padding: 30px;
+
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f3f4f6;
+
+  box-sizing: border-box;
+}
+
+.results-details-card h4 {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e5e7eb;
+  color: #3e3f29;
+}
+
+.result-img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 30px;
+  background: #f9fafb;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+thead th {
+  background-color: #bca88d;
+  color: #3e3f29;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid #3e3f29;
+}
+tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.badge {
+  background-color: #f1f0e4;
+  color: #3e3f29;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.mono-font {
+  font-family: monospace;
+  color: #666;
+}
+.no-data {
+  color: #d9534f;
+  font-style: italic;
+}
+
+@media (max-width: 900px) {
+  .results-container {
+    flex-direction: column;
+    gap: 30px;
+  }
+  .results-summary,
+  .results-details-card {
+    width: 100%;
+    margin-left: 0;
+    max-width: 100%;
+  }
+  .results-summary h3 {
+    border-left: none;
+    border-bottom: 4px solid #3b82f6;
+    padding-left: 0;
+    padding-bottom: 10px;
+  }
+}
