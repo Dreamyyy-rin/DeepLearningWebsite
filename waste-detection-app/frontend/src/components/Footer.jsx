@@ -5,8 +5,11 @@ const Footer = () => {
   return (
     <footer className="footer">
       <p>
-        &copy; {new Date().getFullYear()} <strong>WasteDetection</strong>. All
-        rights reserved.
+        &copy; {new Date().getFullYear()}{" "}
+        <strong>
+          WasteDetection by Oivicko Ekagani Irwanto & Felicia Wijaya
+        </strong>
+        . All rights reserved.
       </p>
     </footer>
   );
