@@ -8,3 +8,4 @@ pandas
 Ultralytics
 tqdm
 seaborn
+opencv-python

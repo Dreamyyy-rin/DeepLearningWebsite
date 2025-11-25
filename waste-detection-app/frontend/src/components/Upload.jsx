@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { predictWaste } from "../api/api";
+import { predictWaste, predictWasteVideo } from "../api/api";
 import "./Upload.css";
 
 const Upload = ({ onResults }) => {
@@ -9,12 +9,28 @@ const Upload = ({ onResults }) => {
   const [loading, setLoading] = useState(false);
   const [modelName, setModelName] = useState("YoloV11s");
   const [confidence, setConfidence] = useState(0.25);
+  const [fileType, setFileType] = useState("image"); // 'image' or 'video'
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       setSelectedFile(file);
-      setPreview(URL.createObjectURL(file));
+
+      // Determine file type based on MIME type
+      const isVideo = file.type.startsWith("video/");
+      const isImage = file.type.startsWith("image/");
+
+      if (isVideo) {
+        setFileType("video");
+        // For video, create a video preview
+        const videoUrl = URL.createObjectURL(file);
+        setPreview({ type: "video", src: videoUrl });
+      } else if (isImage) {
+        setFileType("image");
+        // For image, create an image preview
+        const imageUrl = URL.createObjectURL(file);
+        setPreview({ type: "image", src: imageUrl });
+      }
       setMessage("");
     }
   };
@@ -29,7 +45,12 @@ const Upload = ({ onResults }) => {
     setMessage("Processing...");
 
     try {
-      const result = await predictWaste(selectedFile, modelName, confidence);
+      let result;
+      if (fileType === "video") {
+        result = await predictWasteVideo(selectedFile, modelName, confidence);
+      } else {
+        result = await predictWaste(selectedFile, modelName, confidence);
+      }
       setMessage("Detection complete!");
       onResults(result);
     } catch (error) {
@@ -44,7 +65,7 @@ const Upload = ({ onResults }) => {
     <div className="upload-section">
       <div className="upload-header">
         <h3>Let's Try Out</h3>
-        <p>Upload your waste image and our AI will detect it.</p>
+        <p>Upload your waste image or video and our AI will detect it.</p>
       </div>
 
       <div className="upload-card">
@@ -53,13 +74,26 @@ const Upload = ({ onResults }) => {
             type="file"
             id="fileInput"
             className="file-input"
-            accept="image/*"
+            accept="image/*,video/*"
             onChange={handleFileChange}
             disabled={loading}
           />
           <label htmlFor="fileInput" className="upload-label">
             {preview ? (
-              <img src={preview} alt="Preview" className="image-preview" />
+              preview.type === "video" ? (
+                <video
+                  src={preview.src}
+                  className="video-preview"
+                  controls
+                  style={{ maxHeight: "300px", maxWidth: "100%" }}
+                />
+              ) : (
+                <img
+                  src={preview.src}
+                  alt="Preview"
+                  className="image-preview"
+                />
+              )
             ) : (
               <div className="placeholder-content">
                 <svg
@@ -79,7 +113,7 @@ const Upload = ({ onResults }) => {
                   <strong>Click to Upload</strong>
                 </p>
                 <span className="support-text">
-                  Upload your image by clicking the button below.
+                  Upload your image or video by clicking the button below.
                 </span>
                 <div className="upload-btn-fake">Select File</div>
               </div>
