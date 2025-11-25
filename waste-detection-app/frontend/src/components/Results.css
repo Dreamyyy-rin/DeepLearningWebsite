@@ -1,12 +1,11 @@
 .results-container {
   display: flex;
   align-items: flex-start;
-
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
   padding: 0 20px;
-  gap: 60px;
+  gap: clamp(30px, 5vw, 60px);
   box-sizing: border-box;
   margin-top: 60px;
   padding-top: 60px;
@@ -17,25 +16,22 @@
 .results-summary {
   width: 40%;
   flex-shrink: 0;
-
   position: relative;
 }
 
 .results-summary h3 {
-  font-size: 2.5rem;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
   font-weight: 800;
   color: #3e3f29;
   margin-top: 0;
   margin-bottom: 20px;
-
   border-left: 5px solid #7d8d86;
   padding-left: 20px;
   line-height: 1.1;
-  white-space: nowrap;
 }
 
 .results-info p {
-  font-size: 1.1rem;
+  font-size: clamp(0.95rem, 1.8vw, 1.1rem);
   color: #555;
   margin-bottom: 10px;
 }
@@ -47,16 +43,12 @@
 .results-details-card {
   width: 55%;
   flex-shrink: 0;
-
   margin-left: 20px;
-
   background: #fff;
-  padding: 30px;
-
+  padding: clamp(20px, 4vw, 30px);
   border-radius: 20px;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
   border: 1px solid #f3f4f6;
-
   box-sizing: border-box;
 }
 
@@ -94,7 +86,20 @@
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: auto;
+  pointer-events: none;
+}
+
+.image-region-overlay,
+.video-region-overlay {
+  border: 3px solid #ffd700;
+  background: rgba(255, 215, 0, 0.15);
+  box-sizing: border-box;
+  transition: box-shadow 0.15s ease;
+}
+
+.image-region-overlay:hover,
+.video-region-overlay:hover {
+  box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.4);
 }
 
 .region-info {
@@ -167,6 +172,7 @@ table {
   border-collapse: collapse;
   font-size: 0.95rem;
 }
+
 thead th {
   background-color: #bca88d;
   color: #3e3f29;
@@ -174,11 +180,13 @@ thead th {
   padding: 12px;
   border-bottom: 2px solid #3e3f29;
 }
+
 tbody td {
   padding: 12px;
   border-bottom: 1px solid #eee;
   color: #333;
 }
+
 tbody tr:nth-child(even) {
   background-color: #f9fafb;
 }
@@ -233,6 +241,8 @@ tbody tr:nth-child(even) {
   .results-container {
     flex-direction: column;
     gap: 30px;
+    padding-top: 40px;
+    margin-top: 40px;
   }
   .results-summary,
   .results-details-card {
@@ -246,5 +256,39 @@ tbody tr:nth-child(even) {
     border-bottom: 4px solid #3e3f29;
     padding-left: 0;
     padding-bottom: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .results-container {
+    padding: 0 15px;
+    padding-top: 30px;
+    margin-top: 30px;
+  }
+  .results-details-card {
+    padding: 15px;
+  }
+  .results-summary h3 {
+    font-size: 1.6rem;
+  }
+  .region-info p {
+    font-size: 0.9rem;
+  }
+  .highlight-count {
+    font-size: 1rem;
+    padding: 2px 8px;
+  }
+}
+
+@media (max-width: 430px) {
+  .results-container {
+    padding: 0 12px;
+  }
+  table {
+    font-size: 0.85rem;
+  }
+  thead th,
+  tbody td {
+    padding: 8px;
   }
 }

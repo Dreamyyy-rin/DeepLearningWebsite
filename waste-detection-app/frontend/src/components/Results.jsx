@@ -3,11 +3,11 @@ import "./Results.css";
 
 const Results = ({ data }) => {
   const [videoUrl, setVideoUrl] = useState(null);
-  const [region, setRegion] = useState({
-    x: 100,
-    y: 100,
-    width: 300,
-    height: 200,
+  const [regionNorm, setRegionNorm] = useState({
+    x: 0.15,
+    y: 0.15,
+    w: 0.35,
+    h: 0.3,
   });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -16,20 +16,35 @@ const Results = ({ data }) => {
   const imageRef = useRef(null);
   const videoRef = useRef(null);
   const videoCanvasRef = useRef(null);
+  const imageOverlayRef = useRef(null);
+  const videoOverlayRef = useRef(null);
+
+  const getPixelRegion = useCallback(
+    (displayW, displayH) => {
+      return {
+        x: regionNorm.x * displayW,
+        y: regionNorm.y * displayH,
+        width: regionNorm.w * displayW,
+        height: regionNorm.h * displayH,
+      };
+    },
+    [regionNorm]
+  );
 
   const countObjectsInRegion = useCallback(() => {
     if (!data?.detections || !canvasRef.current || !imageRef.current) return 0;
 
     const canvas = canvasRef.current;
     const image = imageRef.current;
+    const pixelRegion = getPixelRegion(canvas.width, canvas.height);
     const scaleX = image.naturalWidth / canvas.width;
     const scaleY = image.naturalHeight / canvas.height;
 
     const regionInImageCoords = {
-      x1: region.x * scaleX,
-      y1: region.y * scaleY,
-      x2: (region.x + region.width) * scaleX,
-      y2: (region.y + region.height) * scaleY,
+      x1: pixelRegion.x * scaleX,
+      y1: pixelRegion.y * scaleY,
+      x2: (pixelRegion.x + pixelRegion.width) * scaleX,
+      y2: (pixelRegion.y + pixelRegion.height) * scaleY,
     };
 
     let count = 0;
@@ -37,7 +52,6 @@ const Results = ({ data }) => {
       const [bx1, by1, bx2, by2] = det.bbox;
       const centerX = (bx1 + bx2) / 2;
       const centerY = (by1 + by2) / 2;
-
       if (
         centerX >= regionInImageCoords.x1 &&
         centerX <= regionInImageCoords.x2 &&
@@ -47,9 +61,8 @@ const Results = ({ data }) => {
         count++;
       }
     });
-
     return count;
-  }, [data, region]);
+  }, [data, getPixelRegion]);
 
   const countObjectsInVideoRegion = useCallback(() => {
     if (
@@ -58,31 +71,25 @@ const Results = ({ data }) => {
       !videoRef.current
     )
       return 0;
-
     const canvas = videoCanvasRef.current;
     const video = videoRef.current;
-
     if (!video.videoWidth || !video.videoHeight) return 0;
-
+    const pixelRegion = getPixelRegion(canvas.width, canvas.height);
     const scaleX = video.videoWidth / canvas.width;
     const scaleY = video.videoHeight / canvas.height;
-
     const regionInVideoCoords = {
-      x1: region.x * scaleX,
-      y1: region.y * scaleY,
-      x2: (region.x + region.width) * scaleX,
-      y2: (region.y + region.height) * scaleY,
+      x1: pixelRegion.x * scaleX,
+      y1: pixelRegion.y * scaleY,
+      x2: (pixelRegion.x + pixelRegion.width) * scaleX,
+      y2: (pixelRegion.y + pixelRegion.height) * scaleY,
     };
-
     const frameData = data.detections_per_frame[currentFrame];
     if (!frameData || !frameData.detections) return 0;
-
     let count = 0;
     frameData.detections.forEach((det) => {
       const [bx1, by1, bx2, by2] = det.bbox;
       const centerX = (bx1 + bx2) / 2;
       const centerY = (by1 + by2) / 2;
-
       if (
         centerX >= regionInVideoCoords.x1 &&
         centerX <= regionInVideoCoords.x2 &&
@@ -92,9 +99,8 @@ const Results = ({ data }) => {
         count++;
       }
     });
-
     return count;
-  }, [data, region, currentFrame]);
+  }, [data, currentFrame, getPixelRegion]);
 
   useEffect(() => {
     if (data?.video && data.video.startsWith("data:video")) {
@@ -116,7 +122,7 @@ const Results = ({ data }) => {
         };
       } catch (error) {
         console.error("Error converting video:", error);
-        setVideoUrl(data.video); 
+        setVideoUrl(data.video);
       }
     } else {
       setVideoUrl(null);
@@ -140,23 +146,30 @@ const Results = ({ data }) => {
 
     canvas.width = image.offsetWidth;
     canvas.height = image.offsetHeight;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    const pixelRegion = getPixelRegion(canvas.width, canvas.height);
     ctx.strokeStyle = "#FFD700";
     ctx.lineWidth = 3;
-    ctx.strokeRect(region.x, region.y, region.width, region.height);
-
-    ctx.fillStyle = "rgba(255, 215, 0, 0.1)";
-    ctx.fillRect(region.x, region.y, region.width, region.height);
-
+    ctx.strokeRect(
+      pixelRegion.x,
+      pixelRegion.y,
+      pixelRegion.width,
+      pixelRegion.height
+    );
+    ctx.fillStyle = "rgba(255, 215, 0, 0.15)";
+    ctx.fillRect(
+      pixelRegion.x,
+      pixelRegion.y,
+      pixelRegion.width,
+      pixelRegion.height
+    );
     const count = countObjectsInRegion();
     ctx.fillStyle = "#FFD700";
-    ctx.fillRect(region.x, region.y - 30, 80, 25);
+    ctx.fillRect(pixelRegion.x, pixelRegion.y - 30, 90, 25);
     ctx.fillStyle = "#000";
     ctx.font = "bold 16px Arial";
-    ctx.fillText(`Count: ${count}`, region.x + 5, region.y - 10);
-  }, [data, region, countObjectsInRegion]);
+    ctx.fillText(`Count: ${count}`, pixelRegion.x + 5, pixelRegion.y - 10);
+  }, [data, regionNorm, getPixelRegion, countObjectsInRegion]);
 
   useEffect(() => {
     if (!data?.video || !videoCanvasRef.current || !videoRef.current) return;
@@ -169,22 +182,29 @@ const Results = ({ data }) => {
 
       canvas.width = video.offsetWidth;
       canvas.height = video.offsetHeight;
-
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+      const pixelRegion = getPixelRegion(canvas.width, canvas.height);
       ctx.strokeStyle = "#FFD700";
       ctx.lineWidth = 3;
-      ctx.strokeRect(region.x, region.y, region.width, region.height);
-
-      ctx.fillStyle = "rgba(255, 215, 0, 0.1)";
-      ctx.fillRect(region.x, region.y, region.width, region.height);
-
+      ctx.strokeRect(
+        pixelRegion.x,
+        pixelRegion.y,
+        pixelRegion.width,
+        pixelRegion.height
+      );
+      ctx.fillStyle = "rgba(255, 215, 0, 0.15)";
+      ctx.fillRect(
+        pixelRegion.x,
+        pixelRegion.y,
+        pixelRegion.width,
+        pixelRegion.height
+      );
       const count = countObjectsInVideoRegion();
       ctx.fillStyle = "#FFD700";
-      ctx.fillRect(region.x, region.y - 30, 80, 25);
+      ctx.fillRect(pixelRegion.x, pixelRegion.y - 30, 90, 25);
       ctx.fillStyle = "#000";
       ctx.font = "bold 16px Arial";
-      ctx.fillText(`Count: ${count}`, region.x + 5, region.y - 10);
+      ctx.fillText(`Count: ${count}`, pixelRegion.x + 5, pixelRegion.y - 10);
     };
 
     const handleTimeUpdate = () => {
@@ -207,73 +227,96 @@ const Results = ({ data }) => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("loadedmetadata", drawRegion);
     };
-  }, [data, region, countObjectsInVideoRegion]);
+  }, [data, regionNorm, getPixelRegion, countObjectsInVideoRegion]);
 
-  const handleMouseDown = (e) => {
-    if (canvasRef.current) {
-      const canvas = canvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      if (
-        mouseX >= region.x &&
-        mouseX <= region.x + region.width &&
-        mouseY >= region.y &&
-        mouseY <= region.y + region.height
-      ) {
-        setIsDragging(true);
-        setDragOffset({
-          x: mouseX - region.x,
-          y: mouseY - region.y,
-        });
-      }
+  const unifiedPoint = (evt) => {
+    if (evt.touches && evt.touches.length) {
+      return { x: evt.touches[0].clientX, y: evt.touches[0].clientY };
     }
-    else {
+    return { x: evt.clientX, y: evt.clientY };
+  };
+
+  const handlePointerDown = (e, targetType) => {
+    e.preventDefault();
+    const { x, y } = unifiedPoint(e);
+    let targetEl =
+      targetType === "image"
+        ? imageOverlayRef.current
+        : videoOverlayRef.current;
+    let canvasEl =
+      targetType === "image" ? canvasRef.current : videoCanvasRef.current;
+    if (!targetEl || !canvasEl) return;
+
+    const rect = canvasEl.getBoundingClientRect();
+    const displayW = rect.width;
+    const displayH = rect.height;
+    const pixelRegion = getPixelRegion(displayW, displayH);
+    const localX = x - rect.left;
+    const localY = y - rect.top;
+
+    if (
+      localX >= pixelRegion.x &&
+      localX <= pixelRegion.x + pixelRegion.width &&
+      localY >= pixelRegion.y &&
+      localY <= pixelRegion.y + pixelRegion.height
+    ) {
       setIsDragging(true);
-      setDragOffset({
-        x: 0,
-        y: 0,
-      });
+      setDragOffset({ x: localX - pixelRegion.x, y: localY - pixelRegion.y });
     }
   };
 
-  const handleMouseMove = (e) => {
+  const handlePointerMove = (e, targetType) => {
     if (!isDragging) return;
+    e.preventDefault();
+    const { x, y } = unifiedPoint(e);
+    let canvasEl =
+      targetType === "image" ? canvasRef.current : videoCanvasRef.current;
+    if (!canvasEl) return;
 
-    if (canvasRef.current) {
-      const canvas = canvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+    const rect = canvasEl.getBoundingClientRect();
+    const displayW = rect.width;
+    const displayH = rect.height;
+    const localX = x - rect.left;
+    const localY = y - rect.top;
+    const pixelRegion = getPixelRegion(displayW, displayH);
 
-      let newX = mouseX - dragOffset.x;
-      let newY = mouseY - dragOffset.y;
+    let newPixelX = localX - dragOffset.x;
+    let newPixelY = localY - dragOffset.y;
 
-      newX = Math.max(0, Math.min(newX, canvas.width - region.width));
-      newY = Math.max(30, Math.min(newY, canvas.height - region.height));
+    newPixelX = Math.max(0, Math.min(newPixelX, displayW - pixelRegion.width));
+    newPixelY = Math.max(
+      30,
+      Math.min(newPixelY, displayH - pixelRegion.height)
+    );
 
-      setRegion({ ...region, x: newX, y: newY });
-    }
-    else if (videoCanvasRef.current) {
-      const canvas = videoCanvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      let newX = mouseX - region.width / 2;
-      let newY = mouseY - region.height / 2;
-
-      newX = Math.max(0, Math.min(newX, canvas.width - region.width));
-      newY = Math.max(30, Math.min(newY, canvas.height - region.height));
-
-      setRegion({ ...region, x: newX, y: newY });
-    }
+    setRegionNorm({
+      x: newPixelX / displayW,
+      y: newPixelY / displayH,
+      w: regionNorm.w,
+      h: regionNorm.h,
+    });
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = () => {
     setIsDragging(false);
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current && imageRef.current) {
+        const canvas = canvasRef.current;
+        canvas.width = imageRef.current.offsetWidth;
+        canvas.height = imageRef.current.offsetHeight;
+      }
+      if (videoCanvasRef.current && videoRef.current) {
+        videoCanvasRef.current.width = videoRef.current.offsetWidth;
+        videoCanvasRef.current.height = videoRef.current.offsetHeight;
+      }
+      setRegionNorm((r) => ({ ...r }));
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   if (!data) {
     return null;
@@ -323,7 +366,7 @@ const Results = ({ data }) => {
             </>
           ) : (
             <p>
-              <strong>Detections Found:</strong>{" "}
+              <strong>Counting:</strong>{" "}
               <span className="highlight-text">{detections?.length || 0}</span>
             </p>
           )}
@@ -336,7 +379,11 @@ const Results = ({ data }) => {
             <h4>Annotated Image with Counting Region:</h4>
             <div
               className="image-wrapper"
-              style={{ position: "relative", display: "inline-block" }}
+              style={{
+                position: "relative",
+                display: "inline-block",
+                width: "100%",
+              }}
             >
               <img
                 ref={imageRef}
@@ -348,7 +395,7 @@ const Results = ({ data }) => {
                     const canvas = canvasRef.current;
                     canvas.width = imageRef.current.offsetWidth;
                     canvas.height = imageRef.current.offsetHeight;
-                    setRegion({ ...region });
+                    setRegionNorm((r) => ({ ...r }));
                   }
                 }}
               />
@@ -359,14 +406,44 @@ const Results = ({ data }) => {
                   position: "absolute",
                   top: 0,
                   left: 0,
-                  cursor: isDragging ? "grabbing" : "grab",
-                  pointerEvents: "auto",
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none",
                 }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
               />
+              {(() => {
+                if (!canvasRef.current) return null;
+                const rect = canvasRef.current.getBoundingClientRect();
+                const displayW = rect.width;
+                const displayH = rect.height;
+                if (!displayW || !displayH) return null;
+                const pixelRegion = getPixelRegion(displayW, displayH);
+                return (
+                  <div
+                    ref={imageOverlayRef}
+                    className="image-region-overlay"
+                    style={{
+                      position: "absolute",
+                      top: `${pixelRegion.y}px`,
+                      left: `${pixelRegion.x}px`,
+                      width: `${pixelRegion.width}px`,
+                      height: `${pixelRegion.height}px`,
+                      cursor: isDragging ? "grabbing" : "grab",
+                      pointerEvents: "auto",
+                      zIndex: 10,
+                      touchAction: "none",
+                      userSelect: "none",
+                    }}
+                    onMouseDown={(e) => handlePointerDown(e, "image")}
+                    onMouseMove={(e) => handlePointerMove(e, "image")}
+                    onMouseUp={handlePointerUp}
+                    onMouseLeave={handlePointerUp}
+                    onTouchStart={(e) => handlePointerDown(e, "image")}
+                    onTouchMove={(e) => handlePointerMove(e, "image")}
+                    onTouchEnd={handlePointerUp}
+                  />
+                );
+              })()}
             </div>
             <div className="region-info">
               <p>
@@ -387,7 +464,11 @@ const Results = ({ data }) => {
             <h4>Annotated Video with Counting Region:</h4>
             <div
               className="video-wrapper"
-              style={{ position: "relative", display: "inline-block" }}
+              style={{
+                position: "relative",
+                display: "inline-block",
+                width: "100%",
+              }}
             >
               <video
                 ref={videoRef}
@@ -395,7 +476,7 @@ const Results = ({ data }) => {
                 controls
                 className="result-video"
                 style={{
-                  maxWidth: "100%",
+                  width: "100%",
                   maxHeight: "600px",
                   borderRadius: "8px",
                   display: "block",
@@ -409,26 +490,44 @@ const Results = ({ data }) => {
                   position: "absolute",
                   top: 0,
                   left: 0,
+                  width: "100%",
+                  height: "100%",
                   pointerEvents: "none",
                 }}
               />
-              <div
-                className="video-region-overlay"
-                style={{
-                  position: "absolute",
-                  top: region.y,
-                  left: region.x,
-                  width: region.width,
-                  height: region.height,
-                  cursor: isDragging ? "grabbing" : "grab",
-                  pointerEvents: "auto",
-                  zIndex: 10,
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-              />
+              {(() => {
+                if (!videoCanvasRef.current) return null;
+                const rect = videoCanvasRef.current.getBoundingClientRect();
+                const displayW = rect.width;
+                const displayH = rect.height;
+                if (!displayW || !displayH) return null;
+                const pixelRegion = getPixelRegion(displayW, displayH);
+                return (
+                  <div
+                    ref={videoOverlayRef}
+                    className="video-region-overlay"
+                    style={{
+                      position: "absolute",
+                      top: `${pixelRegion.y}px`,
+                      left: `${pixelRegion.x}px`,
+                      width: `${pixelRegion.width}px`,
+                      height: `${pixelRegion.height}px`,
+                      cursor: isDragging ? "grabbing" : "grab",
+                      pointerEvents: "auto",
+                      zIndex: 10,
+                      touchAction: "none",
+                      userSelect: "none",
+                    }}
+                    onMouseDown={(e) => handlePointerDown(e, "video")}
+                    onMouseMove={(e) => handlePointerMove(e, "video")}
+                    onMouseUp={handlePointerUp}
+                    onMouseLeave={handlePointerUp}
+                    onTouchStart={(e) => handlePointerDown(e, "video")}
+                    onTouchMove={(e) => handlePointerMove(e, "video")}
+                    onTouchEnd={handlePointerUp}
+                  />
+                );
+              })()}
             </div>
             <div className="region-info">
               <p>
