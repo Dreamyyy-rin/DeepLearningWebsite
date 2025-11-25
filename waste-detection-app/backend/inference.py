@@ -6,6 +6,7 @@ import base64
 import cv2
 import numpy as np
 import tempfile
+from collections import OrderedDict
 
 CURRENT_FILE = Path(__file__).resolve()
 CURRENT_DIR = CURRENT_FILE.parent
@@ -17,18 +18,25 @@ else:
 
 MODEL_DIR = BASE_DIR / "models"
 
-
 print(f"DEBUG PATH: Folder models aktif di: {MODEL_DIR}")
 
-_models_cache = {}
+# LRU Cache untuk model (max 1 untuk Free plan)
+_models_cache = OrderedDict()
 
-def get_model(model_name: str = 'YoloV11s'):
+def get_model(model_name: str = 'YoloV11n'):
     """
     Load model berdasarkan nama yang dikirim dari React.
     Contoh: jika model_name='YoloV11n', dia cari 'YoloV11n.pt'
+    Cache max 1 model untuk menghemat RAM (Free plan).
     """
+    # Env override default model
+    if model_name == 'YoloV11s' and not model_name:
+        model_name = os.getenv('MODEL_NAME', 'YoloV11n')
+    
+    max_cache = int(os.getenv('MAX_MODEL_CACHE', '1'))
     
     if model_name in _models_cache:
+        _models_cache.move_to_end(model_name)
         return _models_cache[model_name]
     
     try:
@@ -66,9 +74,25 @@ def get_model(model_name: str = 'YoloV11s'):
         raise FileNotFoundError(error_msg)
     
     print(f"SUCCESS: Loading model from {model_path}...")
+    
+    # Evict old models if cache full (LRU)
+    while len(_models_cache) >= max_cache:
+        old_name, old_model = _models_cache.popitem(last=False)
+        print(f"[CACHE] Evicting old model: {old_name}")
+        try:
+            del old_model
+        except:
+            pass
+    
     try:
         model = YOLO(str(model_path))
-        _models_cache[model_name] = model 
+        # Try half precision untuk hemat RAM (CPU biasanya skip)
+        try:
+            model.model.half()
+        except:
+            pass
+        _models_cache[model_name] = model
+        print(f"[CACHE] Model {model_name} loaded. Cache size: {len(_models_cache)}")
         return model
     except Exception as e:
         print(f"CRITICAL ERROR loading YOLO: {e}")

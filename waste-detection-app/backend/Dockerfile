@@ -1,34 +1,31 @@
-# Use Python 3.9 slim image
-FROM python:3.9-slim
+FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies for OpenCV and other libraries
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+# Install minimal system deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
     libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
+# Copy requirements
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install Python deps
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy app files (models included)
+COPY app.py inference.py ./
+COPY routes ./routes
+COPY models ./models
 
-# Expose port
-EXPOSE 5000
+# Environment
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    MAX_MODEL_CACHE=1 \
+    MODEL_NAME=YoloV11n
 
-# Set environment variables
-ENV FLASK_APP=app.py
-ENV PYTHONUNBUFFERED=1
+EXPOSE 10000
 
-# Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "300", "app:app"]
+# Use PORT from Render (fallback 10000)
+CMD gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 1 --threads 2 --timeout 300 --max-requests 100 --max-requests-jitter 10 app:app
