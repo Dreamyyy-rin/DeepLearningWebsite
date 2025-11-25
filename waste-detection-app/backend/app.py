@@ -5,10 +5,10 @@ import os
 
 app = Flask(__name__)
 
-# CORS configuration for production
+# CORS configuration for production - allow all Vercel deployments
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000", "https://*.vercel.app"],
+        "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"]
     }
