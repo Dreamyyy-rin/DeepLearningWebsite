@@ -18,6 +18,8 @@ const Results = ({ data }) => {
   const videoCanvasRef = useRef(null);
   const imageOverlayRef = useRef(null);
   const videoOverlayRef = useRef(null);
+  const lastUpdateRef = useRef(0);
+  const rafRef = useRef(null);
 
   const getPixelRegion = useCallback(
     (displayW, displayH) => {
@@ -268,6 +270,11 @@ const Results = ({ data }) => {
   const handlePointerMove = (e, targetType) => {
     if (!isDragging) return;
     e.preventDefault();
+
+    const now = Date.now();
+    if (targetType === "video" && now - lastUpdateRef.current < 16) return; 
+    lastUpdateRef.current = now;
+
     const { x, y } = unifiedPoint(e);
     let canvasEl =
       targetType === "image" ? canvasRef.current : videoCanvasRef.current;
@@ -289,11 +296,14 @@ const Results = ({ data }) => {
       Math.min(newPixelY, displayH - pixelRegion.height)
     );
 
-    setRegionNorm({
-      x: newPixelX / displayW,
-      y: newPixelY / displayH,
-      w: regionNorm.w,
-      h: regionNorm.h,
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      setRegionNorm({
+        x: newPixelX / displayW,
+        y: newPixelY / displayH,
+        w: regionNorm.w,
+        h: regionNorm.h,
+      });
     });
   };
 
