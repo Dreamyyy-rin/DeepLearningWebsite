@@ -86,11 +86,7 @@ def get_model(model_name: str = 'YoloV11n'):
     
     try:
         model = YOLO(str(model_path))
-        # Try half precision untuk hemat RAM (CPU biasanya skip)
-        try:
-            model.model.half()
-        except:
-            pass
+        # Skip half precision - not supported on CPU
         _models_cache[model_name] = model
         print(f"[CACHE] Model {model_name} loaded. Cache size: {len(_models_cache)}")
         return model
