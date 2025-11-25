@@ -199,15 +199,12 @@ def run_video_inference(video_input, model_name: str = 'YoloV11s', conf: float =
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_output:
             output_video_path = tmp_output.name
         
-        fourcc = cv2.VideoWriter_fourcc(*'H264')
-        if fourcc == -1:
-            fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-        
+        # Use mp4v codec - more compatible across platforms
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
         
         if not out.isOpened():
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
+            raise RuntimeError("Failed to initialize VideoWriter with mp4v codec")
         
         frame_count = 0
         detections_per_frame = []
