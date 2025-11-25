@@ -55,16 +55,13 @@ def predict_video():
     
     try:
         result = run_video_inference(file, model_name=model_name, conf=conf)
-        
-        # Return result with video as base64 for now
-        # Frontend will handle the blob conversion
         return jsonify({
             'detections_per_frame': result['detections_per_frame'],
             'total_frames': result['total_frames'],
             'fps': result['fps'],
             'model_used': result['model_used'],
             'video_size_mb': result['video_size_mb'],
-            'video': result['video']  # Base64 encoded video
+            'video': result['video'] 
         }), 200
     except FileNotFoundError as e:
         return jsonify({'error': str(e)}), 404

@@ -9,25 +9,22 @@ const Upload = ({ onResults }) => {
   const [loading, setLoading] = useState(false);
   const [modelName, setModelName] = useState("YoloV11s");
   const [confidence, setConfidence] = useState(0.25);
-  const [fileType, setFileType] = useState("image"); // 'image' or 'video'
+  const [fileType, setFileType] = useState("image"); 
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       setSelectedFile(file);
 
-      // Determine file type based on MIME type
       const isVideo = file.type.startsWith("video/");
       const isImage = file.type.startsWith("image/");
 
       if (isVideo) {
         setFileType("video");
-        // For video, create a video preview
         const videoUrl = URL.createObjectURL(file);
         setPreview({ type: "video", src: videoUrl });
       } else if (isImage) {
         setFileType("image");
-        // For image, create an image preview
         const imageUrl = URL.createObjectURL(file);
         setPreview({ type: "image", src: imageUrl });
       }

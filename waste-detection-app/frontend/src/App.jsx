@@ -1,13 +1,15 @@
-import React, { useState, useRef, useEffect } from "react"; // 1. Tambah useRef & useEffect
+import React, { useState, useRef, useEffect } from "react"; 
 import Upload from "./components/Upload";
 import Results from "./components/Results";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
+import About from "./components/About";
 import "./App.css";
 import Footer from "./components/Footer";
 
 const App = () => {
   const [results, setResults] = useState(null);
+  const [currentPage, setCurrentPage] = useState("home");
 
   const resultsRef = useRef(null);
 
@@ -15,8 +17,13 @@ const App = () => {
     setResults(data);
   };
 
+  const handleNavigation = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   useEffect(() => {
-    if (results && resultsRef.current) {
+    if (results && resultsRef.current && currentPage === "home") {
       setTimeout(() => {
         resultsRef.current.scrollIntoView({
           behavior: "smooth",
@@ -24,26 +31,33 @@ const App = () => {
         });
       }, 100);
     }
-  }, [results]);
+  }, [results, currentPage]);
 
   return (
     <div className="container">
-      <Navbar />
-      <Hero />
+      <Navbar currentPage={currentPage} onNavigate={handleNavigation} />
 
-      <main className="main-content">
-        <div id="detector" className="hero-wrapper">
-          <Upload onResults={handleResults} />
+      {currentPage === "home" ? (
+        <>
+          <Hero />
+          <main className="main-content">
+            <div id="detector" className="hero-wrapper">
+              <Upload onResults={handleResults} />
 
-          <div ref={resultsRef}>
-            {results && (
-              <div className="results-section">
-                <Results data={results} />
+              <div ref={resultsRef}>
+                {results && (
+                  <div className="results-section">
+                    <Results data={results} />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-      </main>
+            </div>
+          </main>
+        </>
+      ) : (
+        <About />
+      )}
+
       <Footer />
     </div>
   );

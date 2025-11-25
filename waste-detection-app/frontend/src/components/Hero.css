@@ -95,7 +95,6 @@
   pointer-events: none;
 }
 
-/* Responsif untuk Mobile */
 @media (max-width: 900px) {
   .hero {
     flex-direction: column;

@@ -47,7 +47,7 @@ export const predictWasteVideo = async (
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      timeout: 600000, // 10 minutes timeout for video processing
+      timeout: 600000,
       onUploadProgress: (progressEvent) => {
         const percentCompleted = Math.round(
           (progressEvent.loaded * 100) / progressEvent.total
